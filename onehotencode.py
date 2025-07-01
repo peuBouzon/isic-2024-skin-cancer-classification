@@ -1,66 +1,23 @@
 import os
 import pandas as pd
 from sklearn.model_selection import StratifiedKFold
+from dataset import ISIC2024
 
-df = pd.read_csv('~/ufes/datasets/ISIC2024/train-metadata.csv')
+df = pd.read_csv('./train-metadata.csv')
 
-non_features = ['isic_id', 'target', 'patient_id',
-                'image_type', 'tbp_tile_type', 'attribution', 'copyright_license', 
-                'lesion_id', 'iddx_full', 'iddx_1', 'iddx_2', 'iddx_3', 
-                'iddx_4', 'iddx_5', 'mel_mitotic_index', 'mel_thick_mm'
-                ]
-
-categorical_features = ['sex','anatom_site_general',
-                        'tbp_lv_location', 'tbp_lv_location_simple'
-                    ]
-
-numerical_features = ['tbp_lv_eccentricity', 'tbp_lv_area_perim_ratio', 'tbp_lv_deltaB',
-                        'tbp_lv_norm_border', 'tbp_lv_norm_color', 'tbp_lv_symm_2axis',
-                        'tbp_lv_deltaA', 'tbp_lv_perimeterMM', 'tbp_lv_areaMM2', 'tbp_lv_deltaL', 
-                        'tbp_lv_B', 'tbp_lv_x', 'age_approx', 'tbp_lv_nevi_confidence', 'tbp_lv_Cext', 
-                        'tbp_lv_dnn_lesion_confidence', 'tbp_lv_deltaLB', 'clin_size_long_diam_mm', 
-                        'tbp_lv_Lext', 'tbp_lv_L', 'tbp_lv_stdL', 'tbp_lv_z', 'tbp_lv_Aext', 
-                        'tbp_lv_radial_color_std_max', 'tbp_lv_symm_2axis_angle', 'tbp_lv_Bext', 
-                        'tbp_lv_A', 'tbp_lv_H', 'tbp_lv_C', 'tbp_lv_stdLExt', 'tbp_lv_y', 
-                        'tbp_lv_Hext', 'tbp_lv_minorAxisMM', 'tbp_lv_deltaLBnorm', 'tbp_lv_color_std_mean'
-                        ]
-
-encoded_categorical_features = [
-                        'sex_female', 'sex_male',
-                        'anatom_site_general_anterior torso', 'anatom_site_general_head/neck',
-                        'anatom_site_general_lower extremity',
-                        'anatom_site_general_posterior torso',
-                        'anatom_site_general_upper extremity', 'tbp_lv_location_Head & Neck',
-                        'tbp_lv_location_Left Arm', 'tbp_lv_location_Left Arm - Lower',
-                        'tbp_lv_location_Left Arm - Upper', 'tbp_lv_location_Left Leg',
-                        'tbp_lv_location_Left Leg - Lower', 'tbp_lv_location_Left Leg - Upper',
-                        'tbp_lv_location_Right Arm', 'tbp_lv_location_Right Arm - Lower',
-                        'tbp_lv_location_Right Arm - Upper', 'tbp_lv_location_Right Leg',
-                        'tbp_lv_location_Right Leg - Lower',
-                        'tbp_lv_location_Right Leg - Upper', 'tbp_lv_location_Torso Back',
-                        'tbp_lv_location_Torso Back Bottom Third',
-                        'tbp_lv_location_Torso Back Middle Third',
-                        'tbp_lv_location_Torso Back Top Third', 'tbp_lv_location_Torso Front',
-                        'tbp_lv_location_Torso Front Bottom Half',
-                        'tbp_lv_location_Torso Front Top Half', 'tbp_lv_location_Unknown',
-                        'tbp_lv_location_simple_Head & Neck', 'tbp_lv_location_simple_Left Arm',
-                        'tbp_lv_location_simple_Left Leg', 'tbp_lv_location_simple_Right Arm',
-                        'tbp_lv_location_simple_Right Leg', 'tbp_lv_location_simple_Torso Back',
-                        'tbp_lv_location_simple_Torso Front', 'tbp_lv_location_simple_Unknown'
-                    ]
-for ft in categorical_features:
+for ft in ISIC2024.categorical_features:
     is_nan = df[ft].isna() | df[ft].isin(['Unknown'])
     if is_nan.sum() > 0:
         print(f'Filling missing values for {ft} with mode "{df[ft].mode().values[0]}"...')
         df.loc[is_nan, ft] = df[ft].mode()
 
-for ft in numerical_features:
+for ft in ISIC2024.numerical_features:
     is_nan = df[ft].isna()
     if is_nan.sum() > 0:
         print(f'Filling missing values for {ft} with mean "{df[ft].mean()}"...')
         df.loc[is_nan, ft] = df[ft].mean()
 
-df = pd.get_dummies(df, columns=categorical_features, dtype=int)
+df = pd.get_dummies(df, columns=ISIC2024.categorical_features, dtype=int)
 
 kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 df['folder'] = None
