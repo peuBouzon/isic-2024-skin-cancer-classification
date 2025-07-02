@@ -1,5 +1,6 @@
 import pandas as pd
-
+import torch
+from imblearn.over_sampling import SMOTE
 class ISIC2024:
     non_features = ['isic_id', 'target', 'patient_id',
                 'image_type', 'tbp_tile_type', 'attribution', 'copyright_license', 
@@ -46,14 +47,23 @@ class ISIC2024:
                             'tbp_lv_location_simple_Torso Front', #'tbp_lv_location_simple_Unknown'
                         ]
 
-    def __init__(self, path, folder, features=encoded_categorical_features + numerical_features, train=True) -> None:
+    def __init__(self, path, folder, features=encoded_categorical_features + numerical_features, train=True,
+                 return_tensors=False, balance=False) -> None:
         self.metadata = pd.read_csv(path)
         mask = self.metadata['folder'] == folder
-        self.labels = self.metadata['target']
+        self.labels = self.metadata['target'][~mask if train else mask]
         self.metadata = self.metadata[~mask if train else mask][features]
+        
+        if balance:
+            smote = SMOTE()
+            self.metadata, self.labels = smote.fit_resample(self.metadata, y=self.labels)
+        self.return_tensors = return_tensors
+        if return_tensors:
+            self.metadata = torch.Tensor(self.metadata.values)
+            self.labels = torch.LongTensor(self.labels.values)
     
     def __len__(self):
         return len(self.metadata)
 
     def __getitem__(self, index):
-        return self.metadata.iloc[index], self.labels.iloc[index]
+        return self.metadata[index], self.labels[index]
