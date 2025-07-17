@@ -2,15 +2,19 @@ import pandas as pd
 import torch
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
+from typing import Literal
+
+BalanceType = Literal['under', 'smote']
 
 class ISIC2024:
     PATIENT_ID = 'patient_id'
-    NON_FEATURES = ['isic_id', 'target', 'patient_id',
-                'image_type', 'tbp_tile_type', 'attribution', 'copyright_license', 
-                'lesion_id', 'iddx_full', 'iddx_1', 'iddx_2', 'iddx_3', 
-                'iddx_4', 'iddx_5', 'mel_mitotic_index', 'mel_thick_mm'
-                ]
-    
+    NON_FEATURES = [
+        'isic_id', 'target', 'patient_id',
+        'image_type', 'tbp_tile_type', 'attribution', 'copyright_license', 
+        'lesion_id', 'iddx_full', 'iddx_1', 'iddx_2', 'iddx_3', 
+        'iddx_4', 'iddx_5', 'mel_mitotic_index', 'mel_thick_mm'
+    ]
+
     RAW_CATEGORICAL_FEATURES = [ 'sex', 'anatom_site_general', 'tbp_lv_location', 'tbp_lv_location_simple',]
     
     NUMERICAL_FEATURES = [
@@ -78,7 +82,7 @@ class ISIC2024:
     FOLDER_COLUMN = 'folder'
 
     def __init__(self, path, folder, features=ENCODED_CATEGORICAL_FEATURES + NUMERICAL_FEATURES, train=True,
-                 return_tensors=False, balance=False) -> None:
+                 return_tensors=False, balance: BalanceType | None = None) -> None:
         self.metadata = pd.read_csv(path) if ISIC2024.metadata is None else ISIC2024.metadata
         ISIC2024.metadata = self.metadata.copy()
         mask = self.metadata[ISIC2024.FOLDER_COLUMN] == folder
@@ -89,7 +93,7 @@ class ISIC2024:
         self.index_categorical_features = [list(self.metadata.columns).index(x) for x in ISIC2024.RAW_CATEGORICAL_FEATURES]
         self.index_numerical_features = [list(self.metadata.columns).index(x) for x in ISIC2024.NUMERICAL_FEATURES]
 
-        if balance:
+        if balance == 'under':
             sampler = RandomUnderSampler(sampling_strategy=0.01)
             self.metadata, self.labels = sampler.fit_resample(self.metadata, y=self.labels)
         elif balance == 'smote':
