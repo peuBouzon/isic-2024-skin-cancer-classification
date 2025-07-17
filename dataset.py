@@ -4,34 +4,14 @@ from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 
 class ISIC2024:
+    PATIENT_ID = 'patient_id'
     NON_FEATURES = ['isic_id', 'target', 'patient_id',
                 'image_type', 'tbp_tile_type', 'attribution', 'copyright_license', 
                 'lesion_id', 'iddx_full', 'iddx_1', 'iddx_2', 'iddx_3', 
                 'iddx_4', 'iddx_5', 'mel_mitotic_index', 'mel_thick_mm'
                 ]
     
-    RAW_CATEGORICAL_FEATURES = [
-        'sex_female', 'sex_male', 'anatom_site_general_anterior torso',
-        'anatom_site_general_head/neck', 'anatom_site_general_lower extremity',
-        'anatom_site_general_posterior torso',
-        'anatom_site_general_upper extremity', 'tbp_lv_location_Head & Neck',
-        'tbp_lv_location_Left Arm', 'tbp_lv_location_Left Arm - Lower',
-        'tbp_lv_location_Left Arm - Upper', 'tbp_lv_location_Left Leg',
-        'tbp_lv_location_Left Leg - Lower', 'tbp_lv_location_Left Leg - Upper',
-        'tbp_lv_location_Right Arm', 'tbp_lv_location_Right Arm - Lower',
-        'tbp_lv_location_Right Arm - Upper', 'tbp_lv_location_Right Leg',
-        'tbp_lv_location_Right Leg - Lower',
-        'tbp_lv_location_Right Leg - Upper', 'tbp_lv_location_Torso Back',
-        'tbp_lv_location_Torso Back Bottom Third',
-        'tbp_lv_location_Torso Back Middle Third',
-        'tbp_lv_location_Torso Back Top Third', 'tbp_lv_location_Torso Front',
-        'tbp_lv_location_Torso Front Bottom Half',
-        'tbp_lv_location_Torso Front Top Half',
-        'tbp_lv_location_simple_Head & Neck', 'tbp_lv_location_simple_Left Arm',
-        'tbp_lv_location_simple_Left Leg', 'tbp_lv_location_simple_Right Arm',
-        'tbp_lv_location_simple_Right Leg', 'tbp_lv_location_simple_Torso Back',
-        'tbp_lv_location_simple_Torso Front',
-    ]
+    RAW_CATEGORICAL_FEATURES = [ 'sex', 'anatom_site_general', 'tbp_lv_location', 'tbp_lv_location_simple',]
     
     NUMERICAL_FEATURES = [
         'tbp_lv_eccentricity', 
