@@ -2,6 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_auc_score, roc_curve, auc, precision_recall_curve, average_precision_score
 
+def get_partial_auc_scorer(estimator, X, y_true):
+    y_hat = estimator.predict_proba(X)[:, 1]
+    return get_partial_auc(y_hat, y_true)
+
 def get_partial_auc(y_hat, y_true, min_tpr=0.80):
     max_fpr = abs(1 - min_tpr)
     
