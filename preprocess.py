@@ -3,6 +3,8 @@ import pandas as pd
 from sklearn.model_selection import StratifiedGroupKFold
 from sklearn.impute import SimpleImputer
 from dataset import ISIC2024
+import polars as pl
+import numpy as np
 
 def fill_nan(train:pd.DataFrame, test:pd.DataFrame) -> pd.DataFrame:
     imputer = SimpleImputer(strategy='mean')
@@ -12,7 +14,11 @@ def fill_nan(train:pd.DataFrame, test:pd.DataFrame) -> pd.DataFrame:
     return train, test
 
 if __name__ == "__main__":
-    df = pd.read_csv('./train-metadata.csv')
+    df = (pl.read_csv('./train-metadata.csv')
+            .with_columns(pl.col('age_approx').cast(pl.String).replace('NA', np.nan).cast(pl.Float64))
+            .with_columns(pl.col(ISIC2024.RAW_CATEGORICAL_FEATURES).cast(pl.Categorical),
+        )
+        .to_pandas())
 
     df = pd.get_dummies(df, columns=ISIC2024.RAW_CATEGORICAL_FEATURES, dtype=int)
     
