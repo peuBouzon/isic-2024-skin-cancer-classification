@@ -1,8 +1,9 @@
-import numpy as np
 import torch
+import config
+import numpy as np
+import pandas as pd
 import torch.nn.functional as F
 
-import pandas as pd
 from torch import nn
 from tqdm import tqdm
 from dataset import ISIC2024
@@ -20,7 +21,7 @@ ex = Experiment('mlp_experiment')
 
 @ex.config
 def cfg():
-	data_path = './data/isic-2024-one-hot-encoded.csv'
+	data_path = config.ONE_HOT_ENCODED_PATH
 	batch_size = 512
 	epochs = 512
 	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
