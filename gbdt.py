@@ -1,18 +1,20 @@
 import json
-from sklearn.ensemble import VotingClassifier
-from imblearn.under_sampling import RandomUnderSampler
-import lightgbm as lgb
-from imblearn.pipeline import Pipeline
-from dataset import ISIC2024
-from sklearn.model_selection import cross_validate
-import polars as pl
-from sklearn.model_selection import StratifiedGroupKFold
+import config
 import numpy as np
-from metrics import get_partial_auc_scorer, plot_precision_recall_curve, plot_roc_with_partial_auc, get_partial_auc
-from sacred import Experiment
-from sacred.observers import FileStorageObserver
-from datetime import datetime
+import polars as pl
+import lightgbm as lgb
+
 from pathlib import Path
+from dataset import ISIC2024
+from sacred import Experiment
+from datetime import datetime
+from imblearn.pipeline import Pipeline
+from sklearn.ensemble import VotingClassifier
+from sacred.observers import FileStorageObserver
+from sklearn.model_selection import cross_validate
+from imblearn.under_sampling import RandomUnderSampler
+from sklearn.model_selection import StratifiedGroupKFold
+from metrics import get_partial_auc_scorer, plot_precision_recall_curve, plot_roc_with_partial_auc, get_partial_auc
 
 ex = Experiment('gbdt_experiment')
 
@@ -21,8 +23,8 @@ def cfg():
 	sampling_ratio = 0.01
 	random_state = 42
 	n_classifiers = 32
-	data_path = './train-metadata.csv'
-	best_params_path = 'best_hyperparameters.json'
+	data_path = config.RAW_METADATA_PATH
+	best_params_path = config.GBDT_BEST_HYPERPARAMETERS_FILE
 	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 	save_folder = Path('results') / 'gdbt' / timestamp
 	ex.observers.append(FileStorageObserver(save_folder))
