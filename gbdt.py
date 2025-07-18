@@ -9,68 +9,87 @@ import polars as pl
 from sklearn.model_selection import StratifiedGroupKFold
 import numpy as np
 from metrics import get_partial_auc_scorer, plot_precision_recall_curve, plot_roc_with_partial_auc, get_partial_auc
+from sacred import Experiment
+from sacred.observers import FileStorageObserver
+from datetime import datetime
+from pathlib import Path
 
-SAMPLING_RATIO = 0.01
-RANDOM_STATE = 42
-N_CLASSIFIERS = 1
+ex = Experiment('gbdt_experiment')
 
-best_params = {}
-with open('best_hyperparameters.json', 'r') as f:
-  best_params = json.load(f)
+@ex.config
+def cfg():
+	sampling_ratio = 0.01
+	random_state = 42
+	n_classifiers = 1
+	data_path = './train-metadata.csv'
+	best_params_path = 'best_hyperparameters.json'
+	n_splits = 5
+	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+	save_folder = Path('results') / 'gdbt' / timestamp
+	ex.observers.append(FileStorageObserver(save_folder))
 
-estimator = VotingClassifier([
-    (f'lgb{i}', Pipeline([
-        ('sampler', RandomUnderSampler(sampling_strategy=SAMPLING_RATIO, random_state=7+i*5)),
-        ('classifier', lgb.LGBMClassifier(**best_params, random_state=7+i*5)),
-    ])) for i in range(N_CLASSIFIERS)
-], voting='soft')
+@ex.automain
+def run(sampling_ratio, random_state, n_classifiers, data_path, best_params_path, save_folder):
+	best_params = {}
+	with open(best_params_path, 'r') as f:
+		best_params = json.load(f)
+
+	with open(save_folder / 'best_hyperparameters.json', 'w') as f:
+		json.dump(best_params, f, indent=4)
+
+	estimator = VotingClassifier([
+		(f'lgb{i}', Pipeline([
+			('sampler', RandomUnderSampler(sampling_strategy=sampling_ratio, random_state=7+i*5+random_state)),
+			('classifier', lgb.LGBMClassifier(**best_params, random_state=7+i*5+random_state)),
+		])) for i in range(n_classifiers)
+	], voting='soft')
 
 
-df = (pl.read_csv('./train-metadata.csv')
-    .with_columns(pl.col('age_approx').cast(pl.String).replace('NA', np.nan).cast(pl.Float64))
-    .with_columns(pl.col(ISIC2024.RAW_CATEGORICAL_FEATURES).cast(pl.Categorical),
-      )
-      .to_pandas())
+	df = (pl.read_csv(data_path)
+		.with_columns(pl.col('age_approx').cast(pl.String).replace('NA', np.nan).cast(pl.Float64))
+		.with_columns(pl.col(ISIC2024.RAW_CATEGORICAL_FEATURES).cast(pl.Categorical),
+		)
+		.to_pandas())
 
-X = df[ISIC2024.RAW_CATEGORICAL_FEATURES + ISIC2024.NUMERICAL_FEATURES]
-y = df[ISIC2024.TARGET_COLUMN]
-groups = df[ISIC2024.PATIENT_ID]
-cv = StratifiedGroupKFold(5, shuffle=True, random_state=42)
+	X = df[ISIC2024.RAW_CATEGORICAL_FEATURES + ISIC2024.NUMERICAL_FEATURES]
+	y = df[ISIC2024.TARGET_COLUMN]
+	groups = df[ISIC2024.PATIENT_ID]
+	cv = StratifiedGroupKFold(5, shuffle=True, random_state=random_state)
 
-# Define multiple scoring metrics
-scoring = {
-    'pAUC_80': get_partial_auc_scorer,
-}
+	# Define multiple scoring metrics
+	scoring = {
+		'pAUC_80': get_partial_auc_scorer,
+	}
 
-# Use cross_validate instead of cross_val_score
-cv_results = cross_validate(
-    estimator=estimator, 
-    X=X, y=y,
-    cv=cv, 
-    groups=groups,
-    scoring=scoring,
-    return_train_score=False,
-    return_estimator=True,
-    return_indices=True
-)
+	# Use cross_validate instead of cross_val_score
+	cv_results = cross_validate(
+		estimator=estimator, 
+		X=X, y=y,
+		cv=cv, 
+		groups=groups,
+		scoring=scoring,
+		return_train_score=False,
+		return_estimator=True,
+		return_indices=True
+	)
 
-print("Results for each fold:")
-print("-" * 50)
-for fold in range(len(cv_results['test_pAUC_80'])):
-    print(f"Fold {fold + 1}:")
-    print(f"  pAUC: {cv_results['test_pAUC_80'][fold]:.4f}")
+	print("Results for each fold:")
+	print("-" * 50)
+	for fold in range(len(cv_results['test_pAUC_80'])):
+		print(f"Fold {fold + 1}:")
+		print(f"  pAUC: {cv_results['test_pAUC_80'][fold]:.4f}")
 
-print("Average scores across all folds:")
-print(f"pAUC: {np.mean(cv_results['test_pAUC_80']):.4f} ± {np.std(cv_results['test_pAUC_80']):.4f}")
+	print("Average scores across all folds:")
+	print(f"pAUC: {np.mean(cv_results['test_pAUC_80']):.4f} ± {np.std(cv_results['test_pAUC_80']):.4f}")
 
-y_pred, y_true = [], []
-for folder in range(5):
-  val_indexes = ~X.index.isin(cv_results['indices']['train'][folder])
-  y_pred.extend(cv_results['estimator'][folder].predict_proba(X[val_indexes])[:, 1])
-  y_true.extend(y[val_indexes])
+	y_pred, y_true = [], []
+	for folder in range(5):
+		val_indexes = ~X.index.isin(cv_results['indices']['train'][folder])
+		y_pred.extend(cv_results['estimator'][folder].predict_proba(X[val_indexes])[:, 1])
+		y_true.extend(y[val_indexes])
 
-y_pred, y_true = np.array(y_pred), np.array(y_true)
+	y_pred, y_true = np.array(y_pred), np.array(y_true)
 
-print(f"Partial AUC (80% TPR): {get_partial_auc(y_pred, y_true, min_tpr=0.80):.4f}")
-plot_precision_recall_curve(y_pred, y_true)
-plot_roc_with_partial_auc(y_pred, y_true, min_tpr=0.80)
+	print(f"Partial AUC (80% TPR): {get_partial_auc(y_pred, y_true, min_tpr=0.80):.4f}")
+	plot_precision_recall_curve(y_pred, y_true, save_folder=save_folder)
+	plot_roc_with_partial_auc(y_pred, y_true, min_tpr=0.80, save_folder=save_folder)
