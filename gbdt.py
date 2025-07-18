@@ -1,4 +1,6 @@
 import json
+
+import pandas as pd
 import config
 import numpy as np
 import polars as pl
@@ -22,7 +24,7 @@ ex = Experiment('gbdt_experiment')
 def cfg():
 	sampling_ratio = 0.01
 	random_state = 42
-	n_classifiers = 32
+	n_classifiers = 1
 	data_path = config.RAW_METADATA_PATH
 	best_params_path = config.GBDT_BEST_HYPERPARAMETERS_FILE
 	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -86,11 +88,21 @@ def run(sampling_ratio, random_state, n_classifiers, data_path, best_params_path
 	y_pred, y_true = [], []
 	for folder in range(5):
 		val_indexes = ~X.index.isin(cv_results['indices']['train'][folder])
-		y_pred.extend(cv_results['estimator'][folder].predict_proba(X[val_indexes])[:, 1])
-		y_true.extend(y[val_indexes])
+		preds = cv_results['estimator'][folder].predict_proba(X[val_indexes])[:, 1]
+		labels = y[val_indexes]
+		y_pred.extend(preds)
+		y_true.extend(labels)
+
+		predictions_df = pd.DataFrame.from_dict({
+			'preds': preds,
+			'labels': labels,
+		})
+		predictions_file = save_folder / f'folder_{folder + 1}' / 'predictions.csv'
+		predictions_file.parent.mkdir(exist_ok=True)
+		predictions_df.to_csv(predictions_file, index=False)
 
 	y_pred, y_true = np.array(y_pred), np.array(y_true)
 
 	print(f"Partial AUC (80% TPR): {get_partial_auc(y_pred, y_true, min_tpr=0.80):.4f}")
 	plot_precision_recall_curve(y_pred, y_true, save_path=save_folder / 'precision_recall_curve.png')
-	plot_roc_with_partial_auc(y_pred, y_true, min_tpr=0.80, save_folder=save_folder / 'roc_curve.png')
+	plot_roc_with_partial_auc(y_pred, y_true, min_tpr=0.80, save_path=save_folder / 'roc_curve.png')
