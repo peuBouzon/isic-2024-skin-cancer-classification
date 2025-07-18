@@ -3,7 +3,7 @@ import torch
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from typing import Literal
-
+from sklearn.impute import SimpleImputer
 BalanceType = Literal['under', 'smote']
 
 class ISIC2024:
@@ -80,19 +80,33 @@ class ISIC2024:
 
     TARGET_COLUMN = 'target'
     FOLDER_COLUMN = 'folder'
+    METADATA = None
+
+    def fill_nan(df:pd.DataFrame, imputer:SimpleImputer) -> pd.DataFrame:
+        if imputer is not None:
+            df.loc[:, ISIC2024.NUMERICAL_FEATURES] = imputer.transform(df[ISIC2024.NUMERICAL_FEATURES])
+            return df, imputer
+        
+        imputer = SimpleImputer(strategy='mean')
+        df.loc[:, ISIC2024.NUMERICAL_FEATURES] = imputer.fit_transform(df[ISIC2024.NUMERICAL_FEATURES])
+        return df, imputer
 
     def __init__(self, path, folder, features=ENCODED_CATEGORICAL_FEATURES + NUMERICAL_FEATURES, train=True,
-                 return_tensors=False, balance: BalanceType | None = None) -> None:
-        self.metadata = pd.read_csv(path) if ISIC2024.metadata is None else ISIC2024.metadata
-        ISIC2024.metadata = self.metadata.copy()
+                 return_tensors=False, balance: BalanceType | None = None, fillna=False, imputer=None) -> None:
+        self.metadata = pd.read_csv(path, low_memory=False) if ISIC2024.METADATA is None else ISIC2024.METADATA
+        ISIC2024.METADATA = self.metadata.copy()
+
         mask = self.metadata[ISIC2024.FOLDER_COLUMN] == folder
         self.labels = self.metadata[ISIC2024.TARGET_COLUMN][~mask if train else mask]
         self.lbs = self.labels.copy().values
         self.metadata = self.metadata[~mask if train else mask][features]
+        if fillna:
+            self.metadata, self.imputer = ISIC2024.fill_nan(self.metadata, imputer)
 
-        self.index_categorical_features = [list(self.metadata.columns).index(x) for x in ISIC2024.RAW_CATEGORICAL_FEATURES]
+        self.index_categorical_features = [list(self.metadata.columns).index(x) for x in ISIC2024.ENCODED_CATEGORICAL_FEATURES]
         self.index_numerical_features = [list(self.metadata.columns).index(x) for x in ISIC2024.NUMERICAL_FEATURES]
-
+        self.feature_to_indexes = {feature: [list(self.metadata.columns).index(ft) for ft in self.metadata.columns if ft.startswith(feature)] for feature in ISIC2024.RAW_CATEGORICAL_FEATURES + ISIC2024.NUMERICAL_FEATURES}
+        
         if balance == 'under':
             sampler = RandomUnderSampler(sampling_strategy=0.01)
             self.metadata, self.labels = sampler.fit_resample(self.metadata, y=self.labels)
@@ -104,6 +118,12 @@ class ISIC2024:
             self.metadata = torch.Tensor(self.metadata.values)
             self.labels = torch.LongTensor(self.labels.values)
     
+    def get_imputer(self):
+        return self.imputer if hasattr(self, 'imputer') else None
+
+    def get_indexes(self, feature):
+        return self.feature_to_indexes.get(feature, []) if feature in self.feature_to_indexes else []
+
     def __len__(self):
         return len(self.metadata)
 
