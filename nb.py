@@ -1,5 +1,6 @@
 import json
 import torch
+import config
 import numpy as np
 import torch.nn.functional as F
 
@@ -14,14 +15,13 @@ from datetime import datetime
 from pathlib import Path
 
 ex = Experiment('nb_experiment')
-
 @ex.config
 def cfg():
 	sampling_ratio = 0.01
 	random_state = 42
 	n_classifiers = 32
-	data_path = './data/isic-2024-one-hot-encoded.csv'
-	best_features_file = 'nb_best_features.json'
+	data_path = config.ONE_HOT_ENCODED_PATH
+	best_features_file = config.NAIVE_BAYES_BEST_FEATURES_FILE
 	batch_size = 128
 	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 	save_folder = Path('results') / 'naivebayes' / timestamp
