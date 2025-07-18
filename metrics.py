@@ -17,7 +17,7 @@ def get_partial_auc(y_hat, y_true, min_tpr=0.80):
     
     return partial_auc
 
-def plot_precision_recall_curve(probs, y_true, min_recall=0.8):
+def plot_precision_recall_curve(probs, y_true, save_path, min_recall=0.8):
     
     precision, recall, thresholds = precision_recall_curve(y_true, probs)
     average_precision = average_precision_score(y_true, probs)
@@ -27,7 +27,6 @@ def plot_precision_recall_curve(probs, y_true, min_recall=0.8):
              label=f'Curva de Precisão-Sensibilidade (AP = {average_precision:.4f})')
     
     high_recall_idxs = np.where(recall >= min_recall)[0]
-    print(high_recall_idxs)
     if len(high_recall_idxs) > 0:
         high_recall_auc = auc(recall[high_recall_idxs], precision[high_recall_idxs])
         plt.fill_between(recall[high_recall_idxs], precision[high_recall_idxs], 
@@ -52,10 +51,10 @@ def plot_precision_recall_curve(probs, y_true, min_recall=0.8):
     plt.ylabel('Precisão (P)')
     plt.legend(loc="best")
     plt.grid(alpha=0.3)
-    plt.savefig('precision_recall_curve.png', dpi=300, bbox_inches='tight')
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
 
-def plot_roc_with_partial_auc(probs, y_true, min_tpr=0.8):
+def plot_roc_with_partial_auc(probs, y_true, save_path, min_tpr=0.8):
     fpr, tpr, thresholds = roc_curve(y_true, probs)
     roc_auc = auc(fpr, tpr)
    
@@ -93,7 +92,7 @@ def plot_roc_with_partial_auc(probs, y_true, min_tpr=0.8):
     plt.ylabel('Taxa de Verdadeiros Positivos (TPR)')
     plt.legend(loc="lower right")
     plt.grid(alpha=0.3)
-    plt.savefig('roc_curve_with_partial_auc.png', dpi=300, bbox_inches='tight')
+    plt.savefig(save_path, dpi=300, bbox_inches='tight')
     
 
 if __name__ == '__main__':
