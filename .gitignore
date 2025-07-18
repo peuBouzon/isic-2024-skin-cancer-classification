@@ -1,5 +1,4 @@
 **/*.png
-**/*.json
 **/*.pth
 results/**
 # Byte-compiled / optimized / DLL files
