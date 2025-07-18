@@ -1,5 +1,6 @@
 import json
 import torch
+import config
 import optuna
 import numpy as np
 import torch.nn.functional as F
@@ -19,9 +20,9 @@ def objective(trial):
     all_preds = []
     all_labels = []
     for folder in range(1, 6):
-      train_dataset = ISIC2024('./data/isic-2024-one-hot-encoded.csv', folder=folder, return_tensors=True, balance=False)
+      train_dataset = ISIC2024(config.ONE_HOT_ENCODED_PATH, folder=folder, return_tensors=True, balance=False)
       class_weights = len(train_dataset) / torch.bincount(train_dataset.labels)
-      test_dataloader = DataLoader(ISIC2024('./data/isic-2024-one-hot-encoded.csv', folder=folder, train=False, return_tensors=True), 
+      test_dataloader = DataLoader(ISIC2024(config.ONE_HOT_ENCODED_PATH, folder=folder, train=False, return_tensors=True), 
                                   batch_size=BATCH_SIZE, shuffle=False, 
                                   num_workers=4, pin_memory=True, 
                                   persistent_workers=True, prefetch_factor=2)
@@ -51,10 +52,10 @@ def objective(trial):
     return get_partial_auc(preds.numpy(), labels.numpy(), min_tpr=0.80)
 
 if __name__ == '__main__':
-    study = optuna.create_study(direction='maximize', study_name='nb_feature_selection', sampler=optuna.samplers.GPSampler())
+    study = optuna.create_study(direction='maximize', study_name='nb_feature_selection', sampler=optuna.samplers.TPESampler())
     study.optimize(objective, n_trials=250, n_jobs=1)
 
     print("Best pAUC:", study.best_value)
-    print('Salvando best_hyperparameters.json...')
-    with open('nb_best_features_fix.json', 'w') as f:
+    print(f'Salvando {config.NAIVE_BAYES_BEST_FEATURES_FILE}...')
+    with open(config.NAIVE_BAYES_BEST_FEATURES_FILE, 'w') as f:
       json.dump(study.best_params, f, indent=4)
