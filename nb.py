@@ -1,4 +1,5 @@
 import json
+import pandas as pd
 import torch
 import config
 import numpy as np
@@ -60,9 +61,24 @@ def run(sampling_ratio, random_state, n_classifiers, batch_size, data_path, best
 				categorical_features, numerical_features,
 				weights=class_weights)
 
+		folder_preds = []
+		folder_labels = []
 		for batch, labels in test_dataloader:
-			all_preds.append(F.softmax(model(batch), dim=1)[:, 1])
+			preds = F.softmax(model(batch), dim=1)[:, 1]
+			folder_preds.append(preds)
+			folder_labels.append(labels)
+			all_preds.append(preds)
 			all_labels.append(labels)
+
+		folder_preds = torch.cat(folder_preds)
+		folder_labels = torch.cat(folder_labels)
+		predictions_df = pd.DataFrame.from_dict({
+			'preds': folder_preds.cpu().numpy(),
+			'labels': folder_labels.cpu().numpy(),
+		})
+		predictions_file = save_folder / f'folder_{folder}' / 'predictions.csv'
+		predictions_file.parent.mkdir(exist_ok=True)
+		predictions_df.to_csv(predictions_file, index=False)
 
 	preds = torch.cat(all_preds)
 	labels = torch.cat(all_labels)
