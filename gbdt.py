@@ -20,10 +20,9 @@ ex = Experiment('gbdt_experiment')
 def cfg():
 	sampling_ratio = 0.01
 	random_state = 42
-	n_classifiers = 1
+	n_classifiers = 32
 	data_path = './train-metadata.csv'
 	best_params_path = 'best_hyperparameters.json'
-	n_splits = 5
 	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 	save_folder = Path('results') / 'gdbt' / timestamp
 	ex.observers.append(FileStorageObserver(save_folder))
@@ -91,5 +90,5 @@ def run(sampling_ratio, random_state, n_classifiers, data_path, best_params_path
 	y_pred, y_true = np.array(y_pred), np.array(y_true)
 
 	print(f"Partial AUC (80% TPR): {get_partial_auc(y_pred, y_true, min_tpr=0.80):.4f}")
-	plot_precision_recall_curve(y_pred, y_true, save_folder=save_folder)
-	plot_roc_with_partial_auc(y_pred, y_true, min_tpr=0.80, save_folder=save_folder)
+	plot_precision_recall_curve(y_pred, y_true, save_path=save_folder / 'precision_recall_curve.png')
+	plot_roc_with_partial_auc(y_pred, y_true, min_tpr=0.80, save_folder=save_folder / 'roc_curve.png')
