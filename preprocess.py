@@ -5,6 +5,7 @@ from sklearn.impute import SimpleImputer
 from dataset import ISIC2024
 import polars as pl
 import numpy as np
+import config
 
 def fill_nan(train:pd.DataFrame, test:pd.DataFrame) -> pd.DataFrame:
     imputer = SimpleImputer(strategy='mean')
@@ -14,7 +15,7 @@ def fill_nan(train:pd.DataFrame, test:pd.DataFrame) -> pd.DataFrame:
     return train, test
 
 if __name__ == "__main__":
-    df = (pl.read_csv('./train-metadata.csv')
+    df = (pl.read_csv(config.RAW_METADATA_PATH)
             .with_columns(pl.col('age_approx').cast(pl.String).replace('NA', np.nan).cast(pl.Float64))
             .with_columns(pl.col(ISIC2024.RAW_CATEGORICAL_FEATURES).cast(pl.Categorical),
         )
@@ -28,5 +29,4 @@ if __name__ == "__main__":
     for i, (_, test_indexes) in enumerate(kfold.split(df, df[ISIC2024.TARGET_COLUMN], groups=df[ISIC2024.PATIENT_ID])):
         df.loc[test_indexes, ISIC2024.FOLDER_COLUMN] = i + 1
 
-    os.makedirs('./data', exist_ok=True)
-    df.to_csv('./data/isic-2024-one-hot-encoded.csv', index=False)
+    df.to_csv(config.ONE_HOT_ENCODED_PATH, index=False)
