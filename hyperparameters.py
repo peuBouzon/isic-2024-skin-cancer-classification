@@ -1,5 +1,6 @@
 import json
 import optuna
+import config
 import numpy as np
 import polars as pl
 from dataset import ISIC2024
@@ -14,7 +15,7 @@ def objective(trial, X, y, groups):
 	param = {
 		'objective': 'binary',
 		'verbosity': -1,
-		'n_jobs': 16,
+		'n_jobs': -1,
 		'n_estimators': 200,
 		'boosting_type': 'gbdt',
 		'lambda_l1': trial.suggest_float('lambda_l1', 1e-8, 10.0, log=True),
@@ -51,7 +52,7 @@ def objective(trial, X, y, groups):
 	return np.mean(cv_results['test_pAUC_80'])
 
 if __name__ == "__main__":
-	df = (pl.read_csv('./train-metadata.csv')
+	df = (pl.read_csv(config.RAW_METADATA_PATH)
 			.with_columns(pl.col('age_approx').cast(pl.String).replace('NA', np.nan).cast(pl.Float64))
 			.with_columns(pl.col(ISIC2024.RAW_CATEGORICAL_FEATURES).cast(pl.Categorical),
         )
@@ -62,18 +63,18 @@ if __name__ == "__main__":
 	groups = df[ISIC2024.PATIENT_ID]
 	cv = StratifiedGroupKFold(5, shuffle=True, random_state=42)
 
-	study = optuna.create_study(direction='maximize', sampler=optuna.samplers.GPSampler())
+	study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler())
 	study.optimize(partial(objective, X=X, y=y, groups=groups), n_trials=100, n_jobs=-1)
 
 	best_params = {
 		'objective': 'binary',
 		'verbosity': -1,
-		'n_jobs': 16,
+		'n_jobs': 2,
 		'n_estimators': 200,
 		'boosting_type': 'gbdt',
 		**study.best_params,
 	}
 
-	print('Salvando best_hyperparameters.json...')
-	with open('best_hyperparameters.json', 'w') as f:
+	print(f'Salvando {config.GBDT_BEST_HYPERPARAMETERS_FILE}...')
+	with open(config.GBDT_BEST_HYPERPARAMETERS_FILE, 'w') as f:
 		json.dump(best_params, f, indent=4)
