@@ -1,12 +1,8 @@
-**/*.png
-**/*.pth
-results/**
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
 
-**/*.csv
 # C extensions
 *.so
 
