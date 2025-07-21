@@ -4,6 +4,7 @@ import pandas as pd
 from metrics import get_partial_auc, plot_precision_recall_curves, plot_rocs_with_partial_aucs, get_precision_at_recall_95
 import matplotlib.pyplot as plt
 from stats import statistical_test
+from config import EXPERIMENT_DIRS_BY_METHOD
 colors = iter([['r', 'lightcoral'], ['g', 'mediumseagreen'], ['b', 'skyblue']])
 all_preds = []
 all_labels = []
@@ -16,15 +17,10 @@ names_map = {
 
 # experiment => RESULTS_FOLDER / {method} / {experiment_dir}
 RESULTS_FOLDER = Path('results')
-experiment_dirs_by_method = {
-  'mlp' : ['20250719_051429', '20250719_134715', '20250719_181157'],
-  'gbdt': ['20250719_083226', '20250720_083315', '20250720_084828'],
-  'naivebayes': ['20250719_133536', '20250720_085734', '20250720_085818'],
-}
 
 pAUCs = []
 precisions95recall = []
-for i, (method_name, experiment_dirs) in enumerate(experiment_dirs_by_method.items()):
+for i, (method_name, experiment_dirs) in enumerate(EXPERIMENT_DIRS_BY_METHOD.items()):
   methods_names.append(method_name)
   method_pAUCs = []
   pAUCs.append(method_pAUCs)
