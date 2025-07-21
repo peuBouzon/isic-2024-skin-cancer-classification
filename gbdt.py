@@ -16,7 +16,7 @@ from sacred.observers import FileStorageObserver
 from sklearn.model_selection import cross_validate
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import StratifiedGroupKFold
-from metrics import get_partial_auc_scorer, plot_precision_recall_curve, plot_roc_with_partial_auc, get_partial_auc
+from metrics import get_partial_auc_scorer, get_partial_auc
 
 ex = Experiment('gbdt_experiment')
 
@@ -104,5 +104,3 @@ def run(sampling_ratio, random_state, n_classifiers, data_path, best_params_path
 	y_pred, y_true = np.array(y_pred), np.array(y_true)
 
 	print(f"Partial AUC (80% TPR): {get_partial_auc(y_pred, y_true, min_tpr=0.80):.4f}")
-	plot_precision_recall_curve(y_pred, y_true, save_path=save_folder / 'precision_recall_curve.png')
-	plot_roc_with_partial_auc(y_pred, y_true, min_tpr=0.80, save_path=save_folder / 'roc_curve.png')

@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from dataset import ISIC2024
 from torch.utils.data import DataLoader
 from naivebayes import NaiveBayesEnsemble
-from metrics import get_partial_auc, plot_precision_recall_curve, plot_roc_with_partial_auc
+from metrics import get_partial_auc
 
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
@@ -85,7 +85,3 @@ def run(sampling_ratio, random_state, n_classifiers, batch_size, data_path, best
 	print({
 		'pAUC': get_partial_auc(preds.numpy(), labels.numpy(), min_tpr=0.80),
 	})
-
-	plot_roc_with_partial_auc(preds.numpy(), labels.numpy(), min_tpr=0.80, save_path=save_folder / './roc_curve.png')
-	plot_precision_recall_curve(preds.numpy(), labels.numpy(), save_path=save_folder / './precision_recall_curve.png', min_recall=0.8)
-
