@@ -10,7 +10,7 @@ from dataset import ISIC2024
 from torch.optim import Adam
 from torch.utils.data import DataLoader, WeightedRandomSampler
 from torchmetrics.functional import accuracy, recall, precision
-from metrics import get_partial_auc, plot_precision_recall_curve, plot_roc_with_partial_auc
+from metrics import get_partial_auc
 
 from sacred import Experiment
 from sacred.observers import FileStorageObserver
@@ -22,14 +22,18 @@ ex = Experiment('mlp_experiment')
 @ex.config
 def cfg():
 	data_path = config.ONE_HOT_ENCODED_PATH
-	batch_size = 512
-	epochs = 512
+	batch_size = 256
+	epochs = 300
+	warm_up_epochs = 150
 	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 	save_folder = Path('results') / 'mlp' / timestamp
 	ex.observers.append(FileStorageObserver(save_folder))
 
 @ex.automain
-def run(batch_size, epochs, data_path, save_folder):
+def run(batch_size, epochs, warm_up_epochs, data_path, save_folder):
+
+	assert epochs > warm_up_epochs, "O número de épocas deve ser maior que o número de épocas de aquecimento."
+
 	all_preds = []
 	all_labels = []
 	metrics_per_folder = {
@@ -53,10 +57,8 @@ def run(batch_size, epochs, data_path, save_folder):
 
 		train_dataloader = DataLoader(train_dataset,
 									batch_size=batch_size,
-									num_workers=8, pin_memory=True,
-									sampler=sampler,
-									persistent_workers=True,
-									prefetch_factor=4)
+									num_workers=1,
+									sampler=sampler,)
 
 		val_dataset = ISIC2024(data_path, 
 							folder=folder,
@@ -67,12 +69,11 @@ def run(batch_size, epochs, data_path, save_folder):
 
 		val_dataloader = DataLoader(val_dataset, 
 									batch_size=batch_size, shuffle=False, 
-									num_workers=4, pin_memory=True, 
-									persistent_workers=True, prefetch_factor=2)
+									num_workers=1)
 
 		device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-		model = nn.Sequential(nn.LazyLinear(128), nn.BatchNorm1d(128), nn.ReLU(), nn.Dropout(0.3),
+		model = nn.Sequential(nn.Linear(69, 128), nn.BatchNorm1d(128), nn.ReLU(), nn.Dropout(0.3),
 							nn.Linear(128, 64), nn.BatchNorm1d(64), nn.ReLU(), nn.Dropout(0.3),
 							nn.Linear(64, 2)).to(device)
 
@@ -87,7 +88,7 @@ def run(batch_size, epochs, data_path, save_folder):
 		checkpoint_path = save_folder / f'folder_{folder}' / f'best-checkpoint.pth'
 		checkpoint_path.parent.mkdir(exist_ok=True)
 	
-		for _ in progress_bar:
+		for epoch in progress_bar:
 			model.train()
 			loss_epoch = 0
 			for batch, labels in train_dataloader:
@@ -120,7 +121,7 @@ def run(batch_size, epochs, data_path, save_folder):
 				if best_metric < pAUC:
 					best_metric = pAUC
 
-				if loss_epoch < min_loss:
+				if loss_epoch < min_loss and epoch >= warm_up_epochs:
 					min_loss = loss
 					torch.save(model.state_dict(), checkpoint_path)
 
@@ -132,20 +133,20 @@ def run(batch_size, epochs, data_path, save_folder):
 					'pAUC': pAUC,
 					})
 
-		model.load_state_dict(torch.load(checkpoint_path))
+		model.load_state_dict(torch.load(checkpoint_path, weights_only=True))
 		model.eval()
 
 		with torch.no_grad():
-			loss = 0
 			folder_preds = []
 			folder_labels = []
 			for batch, labels in val_dataloader:
-				batch = batch.to(device) 
-				labels = folder_labels.append(labels.to(device))
-				folder_preds.append(F.softmax(model(batch), dim=1)[:, 1])
+				folder_labels.append(labels.to(device))
+				folder_preds.append(F.softmax(model(batch.to(device)), dim=1)[:, 1])
 
 			preds = torch.cat(folder_preds)
 			labels = torch.cat(folder_labels)
+			all_preds.append(preds)
+			all_labels.append(labels)
 
 			pAUC = get_partial_auc(preds.cpu().numpy(), labels.cpu().numpy(), min_tpr=0.80)
 			metrics_per_folder['folder'].append(folder)
@@ -156,13 +157,11 @@ def run(batch_size, epochs, data_path, save_folder):
 			})
 			predictions_df.to_csv(save_folder / f'folder_{folder}' / 'predictions.csv', index=False)
 
-			all_preds.extend(preds.cpu().numpy())
-			all_labels.extend(labels.cpu().numpy())
 
 		metrics_df = pd.DataFrame.from_dict(metrics_per_folder)
 		metrics_df.to_csv(save_folder / f'folder_{folder}' / 'metrics.csv', index=False)
 
+	all_preds = torch.cat(all_preds).cpu().numpy()
+	all_labels = torch.cat(all_labels).cpu().numpy()
 	pAUC = get_partial_auc(np.array(all_preds), np.array(all_labels), min_tpr=0.80)
 	print(f'pAUC final: {pAUC}')
-	plot_precision_recall_curve(np.array(all_preds), np.array(all_labels), save_path= save_folder / './precision_recall_curve.png')
-	plot_roc_with_partial_auc(np.array(all_preds), np.array(all_labels), save_path= save_folder / './roc_curve.png', min_tpr=0.80)
