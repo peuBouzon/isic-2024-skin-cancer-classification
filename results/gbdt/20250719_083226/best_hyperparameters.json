@@ -1,0 +1,18 @@
+{
+    "objective": "binary",
+    "verbosity": -1,
+    "n_jobs": 1,
+    "n_estimators": 200,
+    "boosting_type": "gbdt",
+    "lambda_l1": 1.9905188676641374e-07,
+    "lambda_l2": 6.4952339425703745,
+    "learning_rate": 0.03158966243388206,
+    "max_depth": 5,
+    "num_leaves": 200,
+    "colsample_bytree": 0.23257596119233243,
+    "colsample_bynode": 0.5496514311582186,
+    "bagging_fraction": 0.798035300031455,
+    "bagging_freq": 2,
+    "min_data_in_leaf": 54,
+    "scale_pos_weight": 8.491707162299143
+}

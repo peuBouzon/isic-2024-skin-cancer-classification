@@ -1,0 +1,45 @@
+{
+  "best_params_path": {
+    "py/reduce": [
+      {
+        "py/type": "pathlib._local.PosixPath"
+      },
+      {
+        "py/tuple": [
+          "./gbdt_best_hyperparameters.json"
+        ]
+      }
+    ]
+  },
+  "data_path": {
+    "py/reduce": [
+      {
+        "py/type": "pathlib._local.PosixPath"
+      },
+      {
+        "py/tuple": [
+          "/home/pedro/ufes/datasets/ISIC2024/train-metadata.csv"
+        ]
+      }
+    ]
+  },
+  "n_classifiers": 32,
+  "random_state": 42,
+  "sampling_ratio": 0.01,
+  "save_folder": {
+    "py/reduce": [
+      {
+        "py/type": "pathlib._local.PosixPath"
+      },
+      {
+        "py/tuple": [
+          "results",
+          "gdbt",
+          "20250720_084828"
+        ]
+      }
+    ]
+  },
+  "seed": 882472089,
+  "timestamp": "20250720_084828"
+}

@@ -1,0 +1,46 @@
+{
+  "batch_size": 128,
+  "best_features_file": {
+    "py/reduce": [
+      {
+        "py/type": "pathlib._local.PosixPath"
+      },
+      {
+        "py/tuple": [
+          "./nb_best_features.json"
+        ]
+      }
+    ]
+  },
+  "data_path": {
+    "py/reduce": [
+      {
+        "py/type": "pathlib._local.PosixPath"
+      },
+      {
+        "py/tuple": [
+          "/home/pedro/ufes/datasets/ISIC2024/isic-2024-one-hot-encoded.csv"
+        ]
+      }
+    ]
+  },
+  "n_classifiers": 32,
+  "random_state": 42,
+  "sampling_ratio": 0.01,
+  "save_folder": {
+    "py/reduce": [
+      {
+        "py/type": "pathlib._local.PosixPath"
+      },
+      {
+        "py/tuple": [
+          "results",
+          "naivebayes",
+          "20250720_085734"
+        ]
+      }
+    ]
+  },
+  "seed": 623003019,
+  "timestamp": "20250720_085734"
+}

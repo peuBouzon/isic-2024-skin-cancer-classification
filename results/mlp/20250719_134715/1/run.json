@@ -1,0 +1,103 @@
+{
+  "artifacts": [],
+  "command": "run",
+  "experiment": {
+    "base_dir": "/home/pedro/ufes/informatica_saude/isic-2024-challenge",
+    "dependencies": [
+      "numpy==1.26.4",
+      "sacred==0.8.5",
+      "torch==2.5.1",
+      "torchmetrics==1.7.4",
+      "tqdm==4.67.1"
+    ],
+    "mainfile": "mlp.py",
+    "name": "mlp_experiment",
+    "repositories": [
+      {
+        "commit": "2cb8bfa9a32900de6650c02d17f4935ff32c7bc2",
+        "dirty": true,
+        "url": "git@github.com:peuBouzon/isic-2024-challenge.git"
+      },
+      {
+        "commit": "2cb8bfa9a32900de6650c02d17f4935ff32c7bc2",
+        "dirty": true,
+        "url": "git@github.com:peuBouzon/isic-2024-challenge.git"
+      },
+      {
+        "commit": "2cb8bfa9a32900de6650c02d17f4935ff32c7bc2",
+        "dirty": true,
+        "url": "git@github.com:peuBouzon/isic-2024-challenge.git"
+      },
+      {
+        "commit": "2cb8bfa9a32900de6650c02d17f4935ff32c7bc2",
+        "dirty": true,
+        "url": "git@github.com:peuBouzon/isic-2024-challenge.git"
+      }
+    ],
+    "sources": [
+      [
+        "config.py",
+        "_sources/config_4afea144f4e1b98f667f67ed5742d109.py"
+      ],
+      [
+        "dataset.py",
+        "_sources/dataset_7a1dc2bd71047ac20860cfa0cb34573b.py"
+      ],
+      [
+        "metrics.py",
+        "_sources/metrics_8956f3d4db818167aa27965a8d629b37.py"
+      ],
+      [
+        "mlp.py",
+        "_sources/mlp_640516e3f84c816cbea66c16efa49a64.py"
+      ]
+    ]
+  },
+  "heartbeat": "2025-07-19T20:26:55.193265",
+  "host": {
+    "ENV": {},
+    "cpu": "Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz",
+    "hostname": "pedro-ThinkPad-T470-W10DG",
+    "os": [
+      "Linux",
+      "Linux-6.8.0-64-generic-x86_64-with-glibc2.35"
+    ],
+    "python_version": "3.13.1"
+  },
+  "meta": {
+    "command": "run",
+    "config_updates": {},
+    "named_configs": [],
+    "options": {
+      "--beat-interval": null,
+      "--capture": null,
+      "--comment": null,
+      "--debug": false,
+      "--enforce_clean": false,
+      "--file_storage": null,
+      "--force": false,
+      "--help": false,
+      "--id": null,
+      "--loglevel": null,
+      "--mongo_db": null,
+      "--name": null,
+      "--pdb": false,
+      "--print-config": false,
+      "--priority": null,
+      "--queue": false,
+      "--s3": null,
+      "--sql": null,
+      "--tiny_db": null,
+      "--unobserved": false,
+      "COMMAND": null,
+      "UPDATE": [],
+      "help": false,
+      "with": false
+    }
+  },
+  "resources": [],
+  "result": null,
+  "start_time": "2025-07-19T16:47:15.798383",
+  "status": "COMPLETED",
+  "stop_time": "2025-07-19T20:26:55.185691"
+}
