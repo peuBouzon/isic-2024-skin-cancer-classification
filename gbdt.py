@@ -24,11 +24,11 @@ ex = Experiment('gbdt_experiment')
 def cfg():
 	sampling_ratio = 0.01
 	random_state = 42
-	n_classifiers = 1
+	n_classifiers = 32
 	data_path = config.RAW_METADATA_PATH
 	best_params_path = config.GBDT_BEST_HYPERPARAMETERS_FILE
 	timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-	save_folder = Path('results') / 'gdbt' / timestamp
+	save_folder = Path('results') / 'gbdt' / timestamp
 	ex.observers.append(FileStorageObserver(save_folder))
 
 @ex.automain
